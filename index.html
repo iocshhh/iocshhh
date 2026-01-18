@@ -6,10 +6,25 @@
     <title>iocsh's portfolio</title>
     <link rel="stylesheet" href="style.css">
     <style>
-      .loading {
-        position: relative;
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 10px 0;
       }
-      .loading::after {
+      .image-wrapper {
+        position: relative;
+        border-radius: 10px;
+      }
+      .image-wrapper.loading img {
+        display: none;
+      }
+      .image-wrapper.loading {
+        min-height: 300px;
+        background: #111111;
+        box-shadow: 0 4px 8px rgba(205,92,92,0.5);
+      }
+      .image-wrapper.loading::after {
         content: '';
         position: absolute;
         top: 50%;
@@ -17,10 +32,20 @@
         width: 20px;
         height: 20px;
         margin: -10px;
-        border: 2px solid rgba(0,0,0,0.3);
-        border-top: 2px solid #000;
+        border: 2px solid rgba(255,69,0,0.3);
+        border-top: 2px solid #ff4500;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+      }
+      .image-wrapper img.loaded {
+        box-shadow: 0 4px 8px rgba(205,92,92,0.5);
+      }
+      .image-nav button {
+        background: none;
+        color: #ff4500;
+      }
+      .image-info {
+        background: transparent;
       }
       @keyframes spin {
         0% { transform: rotate(0deg); }
@@ -69,7 +94,7 @@
             <button class="btn" id="btn-tnc">Terms &amp; Conditions</button>
             <a class="btn" id="btn-commission" href="https://ngl.link/iocshh" target="_blank" rel="noopener">Message me anonymously</a>
           </nav>
-          
+
           
         </div>
       </section>
@@ -198,14 +223,6 @@
       const closeButtons = document.querySelectorAll('.modal-close');
       const lightbox = document.getElementById('lightbox');
       const lbImg = document.getElementById('lightbox-img');
-      lbImg.onload = () => lbImg.classList.remove('loading');
-      lbImg.onerror = () => {
-        if (lbImg.src.includes('uc?id=')) {
-          lbImg.src = lbImg.src.replace('uc?id=', 'uc?export=view&id=');
-        } else {
-          console.error('Failed to load image:', lbImg.src);
-        }
-      };
       const lbClose = document.querySelector('.lightbox-close');
       const lbNext = document.querySelector('.lightbox-next');
       const lbPrev = document.querySelector('.lightbox-prev');
@@ -217,21 +234,20 @@
         document.body.style.overflow = 'hidden';
       }
       function closeModal(modal){
+        const focused = modal.querySelector(':focus');
+        if(focused) focused.blur();
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden','true');
         document.body.style.overflow = '';
       }
 
-      let masonryPopulated = false;
-      function populateMasonry(){
-        if(masonryPopulated) return; masonryPopulated = true;
-        galleryImages.forEach((src, idx)=>{
+      let galleryPopulated = false;
+      function populateMasonry(items, startIdx = 0){
+        galleryMasonry.innerHTML = '';
+        items.forEach((item, idx)=>{
           const img = document.createElement('img');
-          img.src = src;
-          img.alt = src.split('/').pop();
-          img.loading = 'lazy';
-          img.classList.add('loading');
-          img.onload = () => img.classList.remove('loading');
+          img.src = item.url;
+          img.alt = '';
           img.onerror = () => {
             if (img.src.includes('uc?id=')) {
               img.src = img.src.replace('uc?id=', 'uc?export=view&id=');
@@ -239,13 +255,13 @@
               console.error('Failed to load image:', img.src);
             }
           };
-          img.dataset.index = idx;
-          img.addEventListener('click', ()=>openLightbox(idx));
+          img.dataset.index = startIdx + idx;
+          img.addEventListener('click', ()=>openLightbox(startIdx + idx));
           galleryMasonry.appendChild(img);
         });
       }
 
-      btnGallery.addEventListener('click', ()=>{ populateMasonry(); openModal(modalGallery); });
+      btnGallery.addEventListener('click', ()=>{ if (!galleryPopulated) { populateMasonry(localItems, 0); galleryPopulated = true; } openModal(modalGallery); });
       btnTnc.addEventListener('click', ()=> openModal(modalTnc));
       closeButtons.forEach(b=>b.addEventListener('click', (e)=>{ closeModal(e.target.closest('.modal')); }));
 
@@ -256,14 +272,13 @@
       function openLightbox(idx){
         currentIndex = idx;
         lbImg.src = galleryImages[currentIndex];
-        lbImg.classList.add('loading');
         lightbox.style.display = 'flex';
         lightbox.setAttribute('aria-hidden','false');
         document.body.style.overflow = 'hidden';
       }
       function closeLightbox(){ lightbox.style.display='none'; lightbox.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
-      function nextImage(){ currentIndex = (currentIndex+1) % galleryImages.length; lbImg.src = galleryImages[currentIndex]; lbImg.classList.add('loading'); }
-      function prevImage(){ currentIndex = (currentIndex-1+galleryImages.length) % galleryImages.length; lbImg.src = galleryImages[currentIndex]; lbImg.classList.add('loading'); }
+      function nextImage(){ currentIndex = (currentIndex+1) % galleryImages.length; lbImg.src = galleryImages[currentIndex]; }
+      function prevImage(){ currentIndex = (currentIndex-1+galleryImages.length) % galleryImages.length; lbImg.src = galleryImages[currentIndex]; }
 
       lbClose.addEventListener('click', closeLightbox);
       lbNext.addEventListener('click', nextImage);
@@ -329,13 +344,47 @@
         });
       }
 
+      const localItems = [
+        {url: 'castdrag.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'castlong.jpg', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'castpf.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'gameikai.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'gccover.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'grncp.JPG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'grnpf.JPG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,cp.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,hl(1).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,hl(2).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,hl(3).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,hl.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'h,pfp.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,cp.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,hl(1).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,hl(2).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,hl(3).png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,hl.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'p,pfp.png', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'pnkcp.jpg', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'pnkhl.jpg', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'pnkpfp.jpg', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'rbxgfxcp.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'rbxgfxstr.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'RZINL.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'RZINLby.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'splash.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'v-firef.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'v-fireg.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'v-icef.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''},
+        {url: 'v-iceg.PNG', title: '', category: '', theme: '', type: '', date: '', description: ''}
+      ];
+
       // Fetch images from Google Spreadsheet
       fetch('https://docs.google.com/spreadsheets/d/1Yi6qb7NWFIxD9zwdROK1FkwS2W0StFJG1PA9Z2Ugu4g/export?format=csv')
       .then(response => response.text())
       .then(data => {
         console.log('Fetched data:', data);
         const lines = data.split('\n').slice(1); // Skip header
-        const items = lines.map(line => {
+        const spreadsheetItems = lines.map(line => {
           const cols = line.split(',');
           return {
             url: cols[0]?.trim() || '',
@@ -347,28 +396,31 @@
             description: cols[6]?.trim() || ''
           };
         }).filter(item => item.url);
-        console.log('Items:', items);
+        console.log('Spreadsheet Items:', spreadsheetItems);
         // Reverse to show newest (last in sheet) first
-        items.reverse();
-        items.forEach(item => {
+        spreadsheetItems.reverse();
+        const allItems = localItems.concat(spreadsheetItems);
+        allItems.forEach(item => {
           if (!item.url.startsWith('http')) {
-            item.url = 'https://drive.google.com/uc?id=' + item.url;
+            item.url = 'img/' + item.url;
           }
         });
         galleryImages.length = 0; // Clear
-        galleryImages.push(...items.map(item => item.url));
+        galleryImages.push(...allItems.map(item => item.url));
+        populateMasonry(localItems, 0);
         const container = document.getElementById('image-container');
-        if (items.length === 0) return;
+        if (spreadsheetItems.length === 0) return;
         let currentIndex = 0;
         const wrapper = document.createElement('div');
         wrapper.className = 'image-wrapper';
         const img = document.createElement('img');
         img.id = 'display-img';
-        img.src = items[currentIndex].url;
-        img.alt = 'Image from spreadsheet';
+        img.src = spreadsheetItems[currentIndex].url;
+        img.alt = 'Recent graphic';
         img.loading = 'eager';
         img.classList.add('loading');
-        img.onload = () => img.classList.remove('loading');
+        wrapper.classList.add('loading');
+        img.onload = () => { img.classList.remove('loading'); wrapper.classList.remove('loading'); img.classList.add('loaded'); };
         img.onerror = () => {
           if (img.src.includes('uc?id=')) {
             img.src = img.src.replace('uc?id=', 'uc?export=view&id=');
@@ -381,16 +433,14 @@
         info.className = 'image-info';
         const updateInfo = () => {
           info.innerHTML = `
-            <h3>${items[currentIndex].title}</h3>
-            <div class="info-row">
-              <span><strong>Category:</strong> ${items[currentIndex].category}</span>
-              <span><strong>Theme:</strong> ${items[currentIndex].theme}</span>
+            <h3>${spreadsheetItems[currentIndex].title}</h3>
+            <p>${spreadsheetItems[currentIndex].description}</p>
+            <div class="info-grid">
+              <div><strong>Category:</strong> ${spreadsheetItems[currentIndex].category}</div>
+              <div><strong>Theme:</strong> ${spreadsheetItems[currentIndex].theme}</div>
+              <div><strong>Type:</strong> ${spreadsheetItems[currentIndex].type}</div>
+              <div><strong>Date:</strong> ${spreadsheetItems[currentIndex].date}</div>
             </div>
-            <div class="info-row">
-              <span><strong>Type:</strong> ${items[currentIndex].type}</span>
-              <span><strong>Date:</strong> ${items[currentIndex].date}</span>
-            </div>
-            <p><strong>Description:</strong> ${items[currentIndex].description}</p>
           `;
         };
         updateInfo();
@@ -400,17 +450,19 @@
         const prevBtn = document.createElement('button');
         prevBtn.textContent = '‹';
         prevBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex - 1 + items.length) % items.length;
-          img.src = items[currentIndex].url;
+          currentIndex = (currentIndex - 1 + spreadsheetItems.length) % spreadsheetItems.length;
+          img.src = spreadsheetItems[currentIndex].url;
           img.classList.add('loading');
+          wrapper.classList.add('loading');
           updateInfo();
         });
         const nextBtn = document.createElement('button');
         nextBtn.textContent = '›';
         nextBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex + 1) % items.length;
-          img.src = items[currentIndex].url;
+          currentIndex = (currentIndex + 1) % spreadsheetItems.length;
+          img.src = spreadsheetItems[currentIndex].url;
           img.classList.add('loading');
+          wrapper.classList.add('loading');
           updateInfo();
         });
         nav.appendChild(prevBtn);
