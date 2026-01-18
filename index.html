@@ -310,6 +310,11 @@
         console.log('Items:', items);
         // Reverse to show newest (last in sheet) first
         items.reverse();
+        items.forEach(item => {
+          if (!item.url.startsWith('http')) {
+            item.url = 'https://drive.google.com/uc?export=view&id=' + item.url;
+          }
+        });
         galleryImages.length = 0; // Clear
         galleryImages.push(...items.map(item => item.url));
         const container = document.getElementById('image-container');
